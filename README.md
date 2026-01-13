@@ -31,14 +31,12 @@ SeleniumEssential/
 │   │   │       │   ├── BasePage.java
 │   │   │       │   └── LoginPage.java
 │   │   │       ├── utils/
-│   │   │       │   ├── ConfigReader.java
 │   │   │       │   ├── ExcelUtils.java
 │   │   │       │   ├── ExcelDataGenerator.java
 │   │   │       │   └── LoggerUtils.java
 │   │   │       └── listeners/
 │   │   │           └── TestListener.java
 │   │   └── resources/
-│   │       ├── config.properties
 │   │       ├── log4j2.xml
 │   │       ├── allure.properties
 │   │       └── testdata/
@@ -78,14 +76,8 @@ SeleniumEssential/
    ```
    Veya IDE'den `ExcelDataGenerator` sınıfını çalıştırın.
 
-4. **Configuration dosyasını düzenleyin:**
-   `src/main/resources/config.properties` dosyasını açın ve gerekli ayarları yapın:
-   ```properties
-   browser=chrome
-   base.url=https://the-internet.herokuapp.com/login
-   implicit.wait=10
-   page.load.timeout=30
-   ```
+4. **Excel dosyasını düzenleyin:**
+   `src/main/resources/testdata/TestData.xlsx` dosyasını açın ve test verilerinizi girin.
 
 ## Test Çalıştırma
 
@@ -142,7 +134,6 @@ src/main/resources/testdata/TestResults.xlsx
 ### LoginTest
 - `testSuccessfulLogin`: Geçerli kullanıcı bilgileri ile login testi
 - `testFailedLogin`: Geçersiz kullanıcı bilgileri ile login testi
-- `testParametricLogin`: Excel'den parametrik login testi
 
 ### HomePageTest
 - `testPageTitle`: Ana sayfa başlık kontrolü
@@ -160,38 +151,44 @@ src/main/resources/testdata/TestResults.xlsx
 
 ## Browser Seçenekleri
 
-`config.properties` dosyasında browser seçimi yapabilirsiniz:
-- `chrome`
-- `firefox`
-- `edge`
+Browser seçimi sistem property'si ile yapılabilir:
+```bash
+mvn test -Dbrowser=chrome
+mvn test -Dbrowser=firefox
+mvn test -Dbrowser=edge
+```
+
+Varsayılan browser: `chrome`
 
 ## Excel Dosya Formatı
 
 ### TestData.xlsx
-LoginData sheet'i şu formatta olmalıdır:
+ECommerceData sheet'i şu formatta olmalıdır:
 
-| Username | Password | ExpectedResult |
-|----------|----------|----------------|
-| tomsmith | SuperSecretPassword! | SUCCESS |
-| invalid_user | invalid_password | FAIL |
+| Email | Password | SearchKeyword | MainCategory | SubCategory | PageNumber | ProductIndex |
+|-------|----------|---------------|--------------|-------------|------------|--------------|
+| test@example.com | Test123456 | samsung | Telefon | Cep Telefonu | 2 | 5 |
 
 ### TestResults.xlsx
 Test sonuçları otomatik olarak şu formatta yazılır:
 
-| Test Adı | Test Durumu | Çalışma Süresi | Hata Mesajı | Tarih/Saat |
+| Test Adı | Test Durumu | Çalışma Süresi (ms) | Hata Mesajı | Tarih/Saat |
 
 ## Notlar
 
 - WebDriverManager otomatik olarak browser driver'larını yönetir
-- Test sonuçları hem Extent Reports hem de Excel'e yazılır
+- Test sonuçları hem Extent Reports, Allure Reports hem de Excel'e yazılır
 - Allure raporları için `allure-results` klasörü otomatik oluşturulur
 - Log dosyaları otomatik olarak rotate edilir
+- Test verileri Excel dosyasından okunur (`TestData.xlsx`)
+- Browser ve URL ayarları sistem property'leri ile yapılabilir
 
 ## Geliştirici Notları
 
 - Yeni test senaryoları eklemek için `src/test/java/org/example/tests/` klasörüne yeni test sınıfları ekleyin
 - Yeni sayfalar için `src/main/java/org/example/pages/` klasörüne Page Object sınıfları ekleyin
 - Test verilerini güncellemek için `TestData.xlsx` dosyasını düzenleyin
+- Browser ve URL ayarları için sistem property'lerini kullanın: `-Dbrowser=chrome -Dbase.url=https://example.com`
 
 ## Lisans
 

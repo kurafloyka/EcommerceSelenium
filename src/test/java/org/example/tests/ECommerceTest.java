@@ -7,12 +7,11 @@ import org.example.pages.*;
 import org.example.utils.ConfigReader;
 import org.example.utils.ExcelUtils;
 import org.example.utils.LoggerUtils;
+import java.util.List;
+import java.util.Map;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * E-ticaret test senaryoları için test sınıfı
@@ -27,12 +26,7 @@ public class ECommerceTest extends BaseTest {
     public void setUp(org.testng.ITestResult result) {
         // E-ticaret URL'ini kullan
         super.setUp(result);
-        // BaseTest'te base.url açılıyor, e-ticaret URL'ine yönlendir
-        String ecommerceUrl = ConfigReader.getECommerceUrl();
-        if (ecommerceUrl != null && !ecommerceUrl.isEmpty()) {
-            driver.get(ecommerceUrl);
-            LoggerUtils.logInfo("E-ticaret sitesi açıldı: " + ecommerceUrl);
-        }
+        
     }
 
     /**
@@ -99,7 +93,7 @@ public class ECommerceTest extends BaseTest {
         Assertions.assertThat(loginPage.isLoginPageDisplayed())
                 .as("Login sayfası görüntülenmeli")
                 .isTrue();
-        loginPage.login("farukakyol441@gmail.com", "Password1*");
+        loginPage.login(email, password);
         try {
             Thread.sleep(2000); // Login sonrası sayfa yüklenmesi için bekle
         } catch (InterruptedException e) {
@@ -117,7 +111,7 @@ public class ECommerceTest extends BaseTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        extentTest.pass("'samsung' araması yapıldı");
+        extentTest.pass("'" + searchKeyword + "' araması yapıldı");
 
         // Adım 4: Sol menüden kategori seçimi yapılacak
         LoggerUtils.logInfo("Adım 4: Kategori seçimi");
@@ -162,7 +156,7 @@ public class ECommerceTest extends BaseTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        extentTest.pass("5. ürün seçildi");
+        extentTest.pass(productIndex + ". ürün seçildi");
 
         // Adım 8: Ürün detayında 'Beğen' butonuna tıklayacak
         LoggerUtils.logInfo("Adım 8: Beğen butonuna tıklama");

@@ -48,13 +48,5 @@ public class ConfigReader {
     public static String getECommerceUrl() {
         return getProperty("ecommerce.url");
     }
-
-    public static String getECommerceEmail() {
-        return getProperty("ecommerce.email");
-    }
-
-    public static String getECommercePassword() {
-        return getProperty("ecommerce.password");
-    }
 }
 

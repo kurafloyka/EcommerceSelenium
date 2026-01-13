@@ -26,39 +26,39 @@ public class ExcelUtils {
      */
     public static List<Map<String, String>> readTestData(String sheetName) {
         List<Map<String, String>> testDataList = new ArrayList<>();
-        
-        // Dosya yolunu belirle - önce relative path, sonra resource path dene
+        LoggerUtils.logInfo("Excel dosyasından test verileri okunuyor...");
+
         java.io.InputStream inputStream = null;
         String usedPath = "";
-        
+
         // Önce relative path'i dene
         java.io.File file = new java.io.File(TEST_DATA_PATH);
         if (file.exists()) {
             try {
                 inputStream = new FileInputStream(file);
                 usedPath = TEST_DATA_PATH;
-                System.out.println("Excel dosyası relative path'ten okunuyor: " + TEST_DATA_PATH);
+                LoggerUtils.logInfo("Excel dosyası relative path'ten okunuyor: " + TEST_DATA_PATH);
             } catch (IOException e) {
-                System.out.println("Relative path'ten okunamadı: " + e.getMessage());
+                LoggerUtils.logWarn("Relative path'ten okunamadı: " + e.getMessage());
             }
         }
-        
+
         // Eğer relative path'te yoksa, resource path'i dene
         if (inputStream == null) {
             inputStream = ExcelUtils.class.getClassLoader()
                     .getResourceAsStream("testdata/TestData.xlsx");
             if (inputStream != null) {
                 usedPath = "testdata/TestData.xlsx (resource)";
-                System.out.println("Excel dosyası resource path'ten okunuyor: testdata/TestData.xlsx");
+                LoggerUtils.logInfo("Excel dosyası resource path'ten okunuyor: testdata/TestData.xlsx");
             } else {
-                throw new RuntimeException("Excel dosyası bulunamadı. Relative path: " + TEST_DATA_PATH + 
-                    ", Resource path: testdata/TestData.xlsx");
+                throw new RuntimeException("Excel dosyası bulunamadı. Relative path: " + TEST_DATA_PATH +
+                        ", Resource path: testdata/TestData.xlsx");
             }
         }
-        
+
         try (Workbook workbook = new XSSFWorkbook(inputStream)) {
-            System.out.println("Excel dosyası açıldı. Sheet sayısı: " + workbook.getNumberOfSheets());
-            
+            LoggerUtils.logInfo("Excel dosyası açıldı. Sheet sayısı: " + workbook.getNumberOfSheets());
+
             Sheet sheet = workbook.getSheet(sheetName);
             if (sheet == null) {
                 // Mevcut sheet'leri listele
@@ -67,24 +67,24 @@ public class ExcelUtils {
                     if (i > 0) availableSheets.append(", ");
                     availableSheets.append(workbook.getSheetName(i));
                 }
-                throw new RuntimeException("Sheet bulunamadı: " + sheetName + 
-                    ". Mevcut sheet'ler: " + availableSheets.toString());
+                throw new RuntimeException("Sheet bulunamadı: " + sheetName +
+                        ". Mevcut sheet'ler: " + availableSheets.toString());
             }
 
-            System.out.println("Sheet bulundu: " + sheetName + ", Toplam satır sayısı: " + sheet.getLastRowNum());
+            LoggerUtils.logInfo("Sheet bulundu: " + sheetName + ", Toplam satır sayısı: " + sheet.getLastRowNum());
 
             // İlk satır header'ları içerir
             Row headerRow = sheet.getRow(0);
             if (headerRow == null) {
                 throw new RuntimeException("Sheet'te header satırı bulunamadı!");
             }
-            
+
             List<String> headers = new ArrayList<>();
             for (Cell cell : headerRow) {
                 String headerValue = getCellValueAsString(cell);
                 headers.add(headerValue);
             }
-            System.out.println("Header'lar okundu: " + headers);
+            LoggerUtils.logInfo("Header'lar okundu: " + headers);
 
             // Diğer satırları oku
             int dataRowCount = 0;
@@ -98,7 +98,7 @@ public class ExcelUtils {
                     String value = cell != null ? getCellValueAsString(cell) : "";
                     rowData.put(headers.get(j), value);
                 }
-                
+
                 // Boş satırları atla
                 boolean isEmpty = true;
                 for (String value : rowData.values()) {
@@ -107,21 +107,29 @@ public class ExcelUtils {
                         break;
                     }
                 }
-                
+
                 if (!isEmpty) {
                     testDataList.add(rowData);
                     dataRowCount++;
                 }
             }
-            
-            System.out.println("Toplam " + dataRowCount + " satır veri okundu");
-            
+
+            LoggerUtils.logInfo("Toplam " + dataRowCount + " satır veri okundu");
+
             if (testDataList.isEmpty()) {
                 throw new RuntimeException("Excel dosyasında veri bulunamadı! Sheet: " + sheetName);
             }
-            
+
         } catch (IOException e) {
             throw new RuntimeException("Excel dosyası okunamadı: " + usedPath, e);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    LoggerUtils.logError("InputStream kapatılırken hata oluştu: " + e.getMessage());
+                }
+            }
         }
 
         return testDataList;
@@ -134,42 +142,54 @@ public class ExcelUtils {
      * @param executionTime Çalışma süresi (ms)
      * @param errorMessage Hata mesajı (varsa)
      */
-    public static void writeTestResult(String testName, String testStatus, long executionTime, String errorMessage) {
+    public static void writeTestResult(String testName, String testStatus,
+                                       long executionTime, String errorMessage) {
         try {
             Workbook workbook;
             Sheet sheet;
-            FileInputStream fileInputStream = null;
-            boolean fileExists = true;
 
-            try {
-                fileInputStream = new FileInputStream(TEST_RESULTS_PATH);
-                workbook = new XSSFWorkbook(fileInputStream);
-                sheet = workbook.getSheet("TestResults");
-                if (sheet == null) {
-                    sheet = workbook.createSheet("TestResults");
-                    createResultHeader(sheet);
+            // Mevcut dosyayı kontrol et
+            java.io.File file = new java.io.File(TEST_RESULTS_PATH);
+            if (file.exists()) {
+                try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                    workbook = new XSSFWorkbook(fileInputStream);
+                    sheet = workbook.getSheet("TestResults");
+                    if (sheet == null) {
+                        sheet = workbook.createSheet("TestResults");
+                        createResultHeader(sheet);
+                    }
                 }
-            } catch (IOException e) {
-                fileExists = false;
+            } else {
                 workbook = new XSSFWorkbook();
                 sheet = workbook.createSheet("TestResults");
                 createResultHeader(sheet);
-            } finally {
-                if (fileInputStream != null) {
-                    fileInputStream.close();
-                }
             }
 
+            // Yeni satır ekle
             int lastRowNum = sheet.getLastRowNum();
             Row newRow = sheet.createRow(lastRowNum + 1);
 
-            // Test Adı
-            Cell cell0 = newRow.createCell(0);
-            cell0.setCellValue(testName);
+            // Test adı
+            Cell testNameCell = newRow.createCell(0);
+            testNameCell.setCellValue(testName);
 
-            // Test Durumu
-            Cell cell1 = newRow.createCell(1);
-            cell1.setCellValue(testStatus);
+            // Test durumu
+            Cell statusCell = newRow.createCell(1);
+            statusCell.setCellValue(testStatus);
+
+            // Çalışma süresi
+            Cell timeCell = newRow.createCell(2);
+            timeCell.setCellValue(executionTime);
+
+            // Hata mesajı
+            Cell errorCell = newRow.createCell(3);
+            errorCell.setCellValue(errorMessage != null ? errorMessage : "");
+
+            // Tarih/Saat
+            Cell dateCell = newRow.createCell(4);
+            dateCell.setCellValue(new java.util.Date().toString());
+
+            // Durum rengini ayarla
             CellStyle style = workbook.createCellStyle();
             Font font = workbook.createFont();
             if ("PASS".equals(testStatus)) {
@@ -177,55 +197,57 @@ public class ExcelUtils {
             } else {
                 font.setColor(IndexedColors.RED.getIndex());
             }
+            font.setBold(true);
             style.setFont(font);
-            cell1.setCellStyle(style);
+            statusCell.setCellStyle(style);
 
-            // Çalışma Süresi
-            Cell cell2 = newRow.createCell(2);
-            cell2.setCellValue(executionTime + " ms");
-
-            // Hata Mesajı
-            Cell cell3 = newRow.createCell(3);
-            cell3.setCellValue(errorMessage != null ? errorMessage : "");
-
-            // Tarih/Saat
-            Cell cell4 = newRow.createCell(4);
-            cell4.setCellValue(new java.util.Date().toString());
-
-            // Auto-size columns
+            // Column genişliklerini ayarla
             for (int i = 0; i < 5; i++) {
                 sheet.autoSizeColumn(i);
             }
 
+            // Dosyayı kaydet
             try (FileOutputStream fileOutputStream = new FileOutputStream(TEST_RESULTS_PATH)) {
                 workbook.write(fileOutputStream);
             }
             workbook.close();
 
+            LoggerUtils.logInfo("Test sonucu Excel'e yazıldı: " + testName + " - " + testStatus);
         } catch (IOException e) {
-            throw new RuntimeException("Test sonucu yazılamadı: " + TEST_RESULTS_PATH, e);
+            LoggerUtils.logError("Test sonucu Excel'e yazılamadı: " + e.getMessage());
         }
     }
 
+    /**
+     * Sonuç dosyası için header satırı oluşturur
+     */
     private static void createResultHeader(Sheet sheet) {
         Row headerRow = sheet.createRow(0);
-        String[] headers = {"Test Adı", "Test Durumu", "Çalışma Süresi", "Hata Mesajı", "Tarih/Saat"};
+        String[] headers = {"Test Adı", "Test Durumu", "Çalışma Süresi (ms)", "Hata Mesajı", "Tarih/Saat"};
+
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
+
             CellStyle style = sheet.getWorkbook().createCellStyle();
             Font font = sheet.getWorkbook().createFont();
             font.setBold(true);
+            font.setColor(IndexedColors.WHITE.getIndex());
             style.setFont(font);
+            style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             cell.setCellStyle(style);
         }
     }
 
+    /**
+     * Cell değerini string olarak alır
+     */
     private static String getCellValueAsString(Cell cell) {
         if (cell == null) {
             return "";
         }
-        
+
         switch (cell.getCellType()) {
             case STRING:
                 return cell.getStringCellValue();
@@ -233,7 +255,13 @@ public class ExcelUtils {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     return cell.getDateCellValue().toString();
                 } else {
-                    return String.valueOf((long) cell.getNumericCellValue());
+                    // Numeric değeri string'e çevir (ondalık kısmı olmadan)
+                    double numValue = cell.getNumericCellValue();
+                    if (numValue == (long) numValue) {
+                        return String.valueOf((long) numValue);
+                    } else {
+                        return String.valueOf(numValue);
+                    }
                 }
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
