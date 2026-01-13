@@ -12,13 +12,13 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
  */
 public class ECommerceLoginPage extends BasePage {
 
-    @FindBy(css = "input[type='email'], input[name*='email'], input[id*='email'], input[type='text'][placeholder*='e-posta']")
+    @FindBy(id = "login-email")
     private WebElement emailInput;
 
-    @FindBy(css = "input[type='password'], input[name*='password'], input[id*='password']")
+    @FindBy(id = "login-password-input")
     private WebElement passwordInput;
 
-    @FindBy(css = "button[type='submit'], button[class*='login'], button[class*='btn-login'], input[type='submit'][value*='Giriş']")
+    @FindBy(css = "button[class='q-primary q-fluid q-button-medium q-button submit']")
     private WebElement loginButton;
 
     public ECommerceLoginPage(WebDriver driver) {
@@ -39,7 +39,7 @@ public class ECommerceLoginPage extends BasePage {
             wait.until(ExpectedConditions.elementToBeClickable(passwordInput));
             sendKeysToElement(passwordInput, password);
 
-            wait.until(ExpectedConditions.elementToBeClickable(loginButton));
+            //wait.until(ExpectedConditions.elementToBeClickable(loginButton));
             clickElement(loginButton);
             LoggerUtils.logInfo("Login işlemi tamamlandı");
         } catch (Exception e) {

@@ -18,6 +18,8 @@ import org.testng.ITestResult;
 import org.testng.annotations.*;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tüm test sınıflarının extend edeceği base test sınıfı
@@ -138,7 +140,25 @@ public class BaseTest {
                 WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOptions = new ChromeOptions();
                 chromeOptions.addArguments("--remote-allow-origins=*");
+                
+                // Cookie ayarları - Cookie'leri otomatik kabul et
+                Map<String, Object> prefs = new HashMap<>();
+                prefs.put("profile.default_content_setting_values.cookies", 1); // 1 = Allow all cookies
+                prefs.put("profile.block_third_party_cookies", false);
+                prefs.put("profile.cookie_controls_mode", 0); // 0 = Allow all cookies
+                chromeOptions.setExperimentalOption("prefs", prefs);
+                
+                // Cookie consent bypass için ek argümanlar
+                chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+                chromeOptions.addArguments("--disable-web-security");
+                chromeOptions.addArguments("--allow-running-insecure-content");
+                chromeOptions.addArguments("--disable-features=CookieDeprecationLabels");
+                
+                // User agent ayarı (bot algılamasını azaltmak için)
+                chromeOptions.addArguments("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                
                 driver = new ChromeDriver(chromeOptions);
+                LoggerUtils.logInfo("Chrome driver başlatıldı - Cookie ayarları aktif");
                 break;
             case "firefox":
                 WebDriverManager.firefoxdriver().setup();
