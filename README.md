@@ -29,14 +29,21 @@ SeleniumEssential/
 │   │   │       │   └── BaseTest.java
 │   │   │       ├── pages/
 │   │   │       │   ├── BasePage.java
-│   │   │       │   └── LoginPage.java
+│   │   │       │   ├── ECommerceCartPage.java
+│   │   │       │   ├── ECommerceHomePage.java
+│   │   │       │   ├── ECommerceLoginPage.java
+│   │   │       │   ├── ECommerceProductPage.java
+│   │   │       │   ├── ECommerceSearchPage.java
+│   │   │       │   └── ECommerceWishlistPage.java
 │   │   │       ├── utils/
+│   │   │       │   ├── ConfigReader.java
 │   │   │       │   ├── ExcelUtils.java
 │   │   │       │   ├── ExcelDataGenerator.java
 │   │   │       │   └── LoggerUtils.java
 │   │   │       └── listeners/
 │   │   │           └── TestListener.java
 │   │   └── resources/
+│   │       ├── config.properties
 │   │       ├── log4j2.xml
 │   │       ├── allure.properties
 │   │       └── testdata/
@@ -46,8 +53,7 @@ SeleniumEssential/
 │       ├── java/
 │       │   └── org/example/
 │       │       └── tests/
-│       │           ├── LoginTest.java
-│       │           └── HomePageTest.java
+│       │           └── ECommerceTest.java
 │       └── resources/
 │           └── testng.xml
 └── pom.xml
@@ -93,7 +99,7 @@ mvn test -DsuiteXmlFile=src/test/resources/testng.xml
 
 ### Belirli bir test sınıfını çalıştırma:
 ```bash
-mvn test -Dtest=LoginTest
+mvn test -Dtest=ECommerceTest
 ```
 
 ## Raporlar
@@ -131,13 +137,15 @@ src/main/resources/testdata/TestResults.xlsx
 
 ## Test Senaryoları
 
-### LoginTest
-- `testSuccessfulLogin`: Geçerli kullanıcı bilgileri ile login testi
-- `testFailedLogin`: Geçersiz kullanıcı bilgileri ile login testi
-
-### HomePageTest
-- `testPageTitle`: Ana sayfa başlık kontrolü
-- `testCurrentUrl`: URL kontrolü
+### ECommerceTest
+- `testCompleteShoppingFlow`: 16 adımlı kapsamlı e-ticaret test senaryosu
+  - Ana sayfa açılışı ve doğrulama
+  - Kullanıcı girişi
+  - Ürün arama ve filtreleme
+  - Sayfa navigasyonu
+  - Ürün detay sayfası işlemleri
+  - Beğendiklerim listesi işlemleri
+  - Sepet işlemleri
 
 ## Kod Kalitesi Özellikleri
 
@@ -149,16 +157,22 @@ src/main/resources/testdata/TestResults.xlsx
 - **Error Handling**: Try-catch blokları ve hata yönetimi
 - **Code Comments**: Türkçe ve İngilizce açıklamalar
 
-## Browser Seçenekleri
+## Konfigürasyon
 
-Browser seçimi sistem property'si ile yapılabilir:
-```bash
-mvn test -Dbrowser=chrome
-mvn test -Dbrowser=firefox
-mvn test -Dbrowser=edge
+### Browser ve URL Ayarları
+Browser ve URL ayarları `config.properties` dosyasından yapılır:
+```properties
+browser=chrome
+base.url=https://www.n11.com
+ecommerce.url=https://www.n11.com
+implicit.wait=10
+page.load.timeout=30
 ```
 
-Varsayılan browser: `chrome`
+### Browser Seçenekleri
+- `chrome` (varsayılan)
+- `firefox`
+- `edge`
 
 ## Excel Dosya Formatı
 
@@ -181,14 +195,16 @@ Test sonuçları otomatik olarak şu formatta yazılır:
 - Allure raporları için `allure-results` klasörü otomatik oluşturulur
 - Log dosyaları otomatik olarak rotate edilir
 - Test verileri Excel dosyasından okunur (`TestData.xlsx`)
-- Browser ve URL ayarları sistem property'leri ile yapılabilir
+- Browser ve URL ayarları `config.properties` dosyasından yapılır
+- Tüm test verileri parametrik olarak Excel'den okunur
 
 ## Geliştirici Notları
 
 - Yeni test senaryoları eklemek için `src/test/java/org/example/tests/` klasörüne yeni test sınıfları ekleyin
 - Yeni sayfalar için `src/main/java/org/example/pages/` klasörüne Page Object sınıfları ekleyin
 - Test verilerini güncellemek için `TestData.xlsx` dosyasını düzenleyin
-- Browser ve URL ayarları için sistem property'lerini kullanın: `-Dbrowser=chrome -Dbase.url=https://example.com`
+- Browser ve URL ayarları için `config.properties` dosyasını düzenleyin
+- Excel dosyası oluşturmak için `ExcelDataGenerator` sınıfını çalıştırın
 
 ## Lisans
 
